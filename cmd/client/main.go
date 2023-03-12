@@ -27,7 +27,7 @@ func main() {
 	flag.Parse()
 	client := &http.Client{}
 
-	//generate the request to the server
+	//generate the request to the server (I would use https instead of http in real life)
 	req, err := http.NewRequest("GET", fmt.Sprintf("http://%s:8080/list_book", hostname), nil)
 	if err != nil {
 		log.Print(err)
@@ -54,12 +54,20 @@ func main() {
 	}
 	defer res.Body.Close()
 
+	//parse the body and return it
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
+	//ask to retry if status code is not OK
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		log.Println(fmt.Errorf("error making the request: %s, please try again", body))
+		return
+	}
+
+	//I would store the data somewhere like S3 or local file instead of printing it out in a normal case
 	var prettyJSON bytes.Buffer
 	json.Indent(&prettyJSON, body, "", "    ")
 	fmt.Println(prettyJSON.String())
